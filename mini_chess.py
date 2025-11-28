@@ -5,8 +5,9 @@
 # - Simple material-eval AI that prefers free captures
 # - Click-to-select, click-to-move with highlighting
 
-import sys
 import math
+import sys
+
 import pygame
 from pygame import Rect
 
@@ -24,55 +25,68 @@ CHECK_HIGHLIGHT = (255, 90, 90)
 
 # Piece unicode map
 UNICODE_PIECES = {
-    ('w', 'K'): '♔',
-    ('w', 'Q'): '♕',
-    ('w', 'R'): '♖',
-    ('w', 'B'): '♗',
-    ('w', 'N'): '♘',
-    ('w', 'P'): '♙',
-    ('b', 'K'): '♚',
-    ('b', 'Q'): '♛',
-    ('b', 'R'): '♜',
-    ('b', 'B'): '♝',
-    ('b', 'N'): '♞',
-    ('b', 'P'): '♟',
+    ("w", "K"): "♔",
+    ("w", "Q"): "♕",
+    ("w", "R"): "♖",
+    ("w", "B"): "♗",
+    ("w", "N"): "♘",
+    ("w", "P"): "♙",
+    ("b", "K"): "♚",
+    ("b", "Q"): "♛",
+    ("b", "R"): "♜",
+    ("b", "B"): "♝",
+    ("b", "N"): "♞",
+    ("b", "P"): "♟",
 }
 
 PIECE_VALUES = {
-    'K': 0,   # evaluate as 0 for material; game end handled separately
-    'Q': 9,
-    'R': 5,
-    'B': 3,
-    'N': 3,
-    'P': 1
+    "K": 0,  # evaluate as 0 for material; game end handled separately
+    "Q": 9,
+    "R": 5,
+    "B": 3,
+    "N": 3,
+    "P": 1,
 }
+
 
 # --------------- Board ----------------
 class Board:
     def __init__(self):
         # board[row][col] -> (color, piece) or None
         self.board = [[None for _ in range(8)] for _ in range(8)]
-        self.to_move = 'w'
+        self.to_move = "w"
         self.history = []  # for undo
         self._setup_start()
 
     def _setup_start(self):
         # Black back rank
         self.board[0] = [
-            ('b', 'R'), ('b', 'N'), ('b', 'B'), ('b', 'Q'),
-            ('b', 'K'), ('b', 'B'), ('b', 'N'), ('b', 'R')
+            ("b", "R"),
+            ("b", "N"),
+            ("b", "B"),
+            ("b", "Q"),
+            ("b", "K"),
+            ("b", "B"),
+            ("b", "N"),
+            ("b", "R"),
         ]
         # Black pawns
-        self.board[1] = [('b', 'P') for _ in range(8)]
+        self.board[1] = [("b", "P") for _ in range(8)]
         # Empty
         for r in range(2, 6):
             self.board[r] = [None for _ in range(8)]
         # White pawns
-        self.board[6] = [('w', 'P') for _ in range(8)]
+        self.board[6] = [("w", "P") for _ in range(8)]
         # White back rank
         self.board[7] = [
-            ('w', 'R'), ('w', 'N'), ('w', 'B'), ('w', 'Q'),
-            ('w', 'K'), ('w', 'B'), ('w', 'N'), ('w', 'R')
+            ("w", "R"),
+            ("w", "N"),
+            ("w", "B"),
+            ("w", "Q"),
+            ("w", "K"),
+            ("w", "B"),
+            ("w", "N"),
+            ("w", "R"),
         ]
 
     def clone(self):
@@ -94,7 +108,7 @@ class Board:
     def find_king(self, color):
         for r in range(8):
             for c in range(8):
-                if self.board[r][c] == (color, 'K'):
+                if self.board[r][c] == (color, "K"):
                     return (r, c)
         return None
 
@@ -112,7 +126,7 @@ class Board:
             color, _ = piece
             self.set_at(dr, dc, (color, promo))
         # side to move
-        self.to_move = 'b' if self.to_move == 'w' else 'w'
+        self.to_move = "b" if self.to_move == "w" else "w"
 
     def undo(self):
         if not self.history:
@@ -122,10 +136,10 @@ class Board:
         # undo promotion
         if promo:
             color, _ = piece
-            piece = (color, 'P')
+            piece = (color, "P")
         self.set_at(sr, sc, piece)
         self.set_at(dr, dc, captured)
-        self.to_move = 'b' if self.to_move == 'w' else 'w'
+        self.to_move = "b" if self.to_move == "w" else "w"
 
     def material_score(self, color):
         score = 0
@@ -137,6 +151,7 @@ class Board:
                     val = PIECE_VALUES[kind]
                     score += val if side == color else -val
         return score
+
 
 # --------------- Rules ----------------
 class Rules:
@@ -160,17 +175,17 @@ class Rules:
                 p = board.at(r, c)
                 if p and p[0] == color:
                     kind = p[1]
-                    if kind == 'P':
+                    if kind == "P":
                         moves.extend(Rules._pawn_moves(board, r, c, color))
-                    elif kind == 'N':
+                    elif kind == "N":
                         moves.extend(Rules._knight_moves(board, r, c, color))
-                    elif kind == 'B':
+                    elif kind == "B":
                         moves.extend(Rules._bishop_moves(board, r, c, color))
-                    elif kind == 'R':
+                    elif kind == "R":
                         moves.extend(Rules._rook_moves(board, r, c, color))
-                    elif kind == 'Q':
+                    elif kind == "Q":
                         moves.extend(Rules._queen_moves(board, r, c, color))
-                    elif kind == 'K':
+                    elif kind == "K":
                         moves.extend(Rules._king_moves(board, r, c, color))
         return moves
 
@@ -181,26 +196,34 @@ class Rules:
         if not king_pos:
             return True  # no king means effectively check (game over)
         kr, kc = king_pos
-        opp = 'b' if color == 'w' else 'w'
+        opp = "b" if color == "w" else "w"
         # generate all opponent pseudo moves and see if any hits king
         for r in range(8):
             for c in range(8):
                 p = board.at(r, c)
                 if p and p[0] == opp:
                     kind = p[1]
-                    if kind == 'P':
-                        dirs = [(-1, -1), (-1, 1)] if opp == 'w' else [(1, -1), (1, 1)]
+                    if kind == "P":
+                        dirs = [(-1, -1), (-1, 1)] if opp == "w" else [(1, -1), (1, 1)]
                         for dr, dc in dirs:
                             rr, cc = r + dr, c + dc
                             if board.in_bounds(rr, cc) and (rr, cc) == (kr, kc):
                                 return True
-                    elif kind == 'N':
-                        for dr, dc in [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
-                                       (1, -2), (1, 2), (2, -1), (2, 1)]:
+                    elif kind == "N":
+                        for dr, dc in [
+                            (-2, -1),
+                            (-2, 1),
+                            (-1, -2),
+                            (-1, 2),
+                            (1, -2),
+                            (1, 2),
+                            (2, -1),
+                            (2, 1),
+                        ]:
                             rr, cc = r + dr, c + dc
                             if board.in_bounds(rr, cc) and (rr, cc) == (kr, kc):
                                 return True
-                    elif kind in ('B', 'R', 'Q'):
+                    elif kind in ("B", "R", "Q"):
                         for dr, dc in Rules._sliding_dirs(kind):
                             rr, cc = r + dr, c + dc
                             while board.in_bounds(rr, cc):
@@ -211,7 +234,7 @@ class Rules:
                                     break
                                 rr += dr
                                 cc += dc
-                    elif kind == 'K':
+                    elif kind == "K":
                         for dr in [-1, 0, 1]:
                             for dc in [-1, 0, 1]:
                                 if dr == 0 and dc == 0:
@@ -224,18 +247,22 @@ class Rules:
     @staticmethod
     def _pawn_moves(board: Board, r, c, color):
         moves = []
-        dir_forward = -1 if color == 'w' else 1
-        start_row = 6 if color == 'w' else 1
-        promote_row = 0 if color == 'w' else 7
+        dir_forward = -1 if color == "w" else 1
+        start_row = 6 if color == "w" else 1
+        promote_row = 0 if color == "w" else 7
 
         # forward 1
         fr, fc = r + dir_forward, c
         if board.in_bounds(fr, fc) and board.at(fr, fc) is None:
-            promo = 'Q' if fr == promote_row else None
+            promo = "Q" if fr == promote_row else None
             moves.append((r, c, fr, fc, promo))
             # forward 2
             fr2 = r + 2 * dir_forward
-            if r == start_row and board.in_bounds(fr2, fc) and board.at(fr2, fc) is None:
+            if (
+                r == start_row
+                and board.in_bounds(fr2, fc)
+                and board.at(fr2, fc) is None
+            ):
                 moves.append((r, c, fr2, fc, None))
 
         # captures
@@ -244,7 +271,7 @@ class Rules:
             if board.in_bounds(rr, cc):
                 target = board.at(rr, cc)
                 if target and target[0] != color:
-                    promo = 'Q' if rr == promote_row else None
+                    promo = "Q" if rr == promote_row else None
                     moves.append((r, c, rr, cc, promo))
 
         # en passant omitted (by design to keep it simple)
@@ -253,8 +280,16 @@ class Rules:
     @staticmethod
     def _knight_moves(board: Board, r, c, color):
         moves = []
-        for dr, dc in [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
-                       (1, -2), (1, 2), (2, -1), (2, 1)]:
+        for dr, dc in [
+            (-2, -1),
+            (-2, 1),
+            (-1, -2),
+            (-1, 2),
+            (1, -2),
+            (1, 2),
+            (2, -1),
+            (2, 1),
+        ]:
             rr, cc = r + dr, c + dc
             if board.in_bounds(rr, cc):
                 target = board.at(rr, cc)
@@ -264,9 +299,9 @@ class Rules:
 
     @staticmethod
     def _sliding_dirs(kind):
-        if kind == 'B':
+        if kind == "B":
             return [(-1, -1), (-1, 1), (1, -1), (1, 1)]
-        if kind == 'R':
+        if kind == "R":
             return [(-1, 0), (1, 0), (0, -1), (0, 1)]
         # Queen
         return [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -290,15 +325,15 @@ class Rules:
 
     @staticmethod
     def _bishop_moves(board: Board, r, c, color):
-        return Rules._slide(board, r, c, color, Rules._sliding_dirs('B'))
+        return Rules._slide(board, r, c, color, Rules._sliding_dirs("B"))
 
     @staticmethod
     def _rook_moves(board: Board, r, c, color):
-        return Rules._slide(board, r, c, color, Rules._sliding_dirs('R'))
+        return Rules._slide(board, r, c, color, Rules._sliding_dirs("R"))
 
     @staticmethod
     def _queen_moves(board: Board, r, c, color):
-        return Rules._slide(board, r, c, color, Rules._sliding_dirs('Q'))
+        return Rules._slide(board, r, c, color, Rules._sliding_dirs("Q"))
 
     @staticmethod
     def _king_moves(board: Board, r, c, color):
@@ -314,6 +349,7 @@ class Rules:
                         moves.append((r, c, rr, cc, None))
         # Castling omitted for simplicity
         return moves
+
 
 # --------------- Simple AI ----------------
 class SimpleAI:
@@ -337,8 +373,8 @@ class SimpleAI:
                 mover = board.at(sr, sc)
                 if mover:
                     gain -= PIECE_VALUES[mover[1]] * 0.1  # small penalty
-                if promo == 'Q':
-                    gain += PIECE_VALUES['Q'] - PIECE_VALUES['P']
+                if promo == "Q":
+                    gain += PIECE_VALUES["Q"] - PIECE_VALUES["P"]
                 if gain > best_gain:
                     best_gain = gain
                     best_cap = mv
@@ -358,9 +394,10 @@ class SimpleAI:
 
         return best_move or legal[0]
 
+
 # --------------- Rendering / Game ---------------
 class Game:
-    def __init__(self, human_color='w'):
+    def __init__(self, human_color="w"):
         pygame.init()
         pygame.display.set_caption("Mini Chess - Python + Pygame")
         self.screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
@@ -368,7 +405,7 @@ class Game:
         self.board = Board()
 
         self.human_color = human_color
-        self.ai_color = 'b' if human_color == 'w' else 'w'
+        self.ai_color = "b" if human_color == "w" else "w"
         self.ai = SimpleAI(self.ai_color)
 
         self.selected = None
@@ -380,16 +417,16 @@ class Game:
 
     def _load_chess_font(self, size):
         candidates = [
-            'segoe ui symbol',    # Windows
-            'arial unicode ms',
-            'dejavusans',
-            None                  # default
+            "segoe ui symbol",  # Windows
+            "arial unicode ms",
+            "dejavusans",
+            None,  # default
         ]
         for name in candidates:
             try:
                 f = pygame.font.SysFont(name, size)
                 # quick render test
-                surf = f.render('♔', True, (0, 0, 0))
+                surf = f.render("♔", True, (0, 0, 0))
                 if surf:  # success
                     return f
             except Exception:
@@ -440,7 +477,8 @@ class Game:
             if p and p[0] == self.human_color:
                 self.selected = (r, c)
                 self.legal_moves_from_selected = [
-                    mv for mv in Rules.generate_legal_moves(self.board, self.human_color)
+                    mv
+                    for mv in Rules.generate_legal_moves(self.board, self.human_color)
                     if mv[0] == r and mv[1] == c
                 ]
         else:
@@ -463,7 +501,9 @@ class Game:
         if legal:
             return False
         if Rules.is_in_check(self.board, color):
-            pygame.display.set_caption(f"Mini Chess - Checkmate! {'White' if color=='b' else 'Black'} wins")
+            pygame.display.set_caption(
+                f"Mini Chess - Checkmate! {'White' if color == 'b' else 'Black'} wins"
+            )
         else:
             pygame.display.set_caption("Mini Chess - Stalemate!")
         return True
@@ -483,12 +523,14 @@ class Game:
             pygame.draw.rect(self.screen, HIGHLIGHT_COLOR, rect)
 
         # highlight check on current player's king (visual cue)
-        for side in ('w', 'b'):
+        for side in ("w", "b"):
             if Rules.is_in_check(self.board, side):
                 kp = self.board.find_king(side)
                 if kp:
                     kr, kc = kp
-                    rect = Rect(kc * SQUARE_SIZE, kr * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+                    rect = Rect(
+                        kc * SQUARE_SIZE, kr * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE
+                    )
                     pygame.draw.rect(self.screen, CHECK_HIGHLIGHT, rect, width=4)
 
         # draw move targets
@@ -505,15 +547,17 @@ class Game:
                 p = self.board.at(r, c)
                 if not p:
                     continue
-                symbol = UNICODE_PIECES.get(p, '?')
+                symbol = UNICODE_PIECES.get(p, "?")
                 # choose color contrasting with square
                 is_light = (r + c) % 2 == 0
                 text_color = (30, 30, 30) if is_light else (240, 240, 240)
                 surf = self.font.render(symbol, True, text_color)
-                rect = surf.get_rect(center=(
-                    c * SQUARE_SIZE + SQUARE_SIZE // 2,
-                    r * SQUARE_SIZE + SQUARE_SIZE // 2
-                ))
+                rect = surf.get_rect(
+                    center=(
+                        c * SQUARE_SIZE + SQUARE_SIZE // 2,
+                        r * SQUARE_SIZE + SQUARE_SIZE // 2,
+                    )
+                )
                 self.screen.blit(surf, rect)
 
     def _draw(self):
@@ -522,11 +566,12 @@ class Game:
         self._draw_pieces()
         pygame.display.flip()
 
+
 # --------------- Entry Point ---------------
 if __name__ == "__main__":
     # Default: Human plays White vs AI Black.
     # To switch, pass "black" as CLI arg: python mini_chess.py black
-    human_color = 'w'
-    if len(sys.argv) > 1 and sys.argv[1].lower().startswith('b'):
-        human_color = 'b'
+    human_color = "w"
+    if len(sys.argv) > 1 and sys.argv[1].lower().startswith("b"):
+        human_color = "b"
     Game(human_color=human_color).run()
